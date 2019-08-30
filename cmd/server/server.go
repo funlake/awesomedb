@@ -18,7 +18,7 @@ func init() {
 	cp.StringVar(&peers, "peers", "http://127.0.0.1:12379", "raftkv node peers")
 	cp.IntVarP(&id, "id", "i", 1, "Id of raft node")
 	cp.BoolVarP(&join, "join", "j", false, "If join to a cluster")
-	cp.StringVarP(&port, "port", "p", "8898", "Http serve port")
+	cp.StringVarP(&port, "port", "p", "12380", "Http serve port")
 
 }
 

@@ -10,54 +10,52 @@ import (
 	"net/http"
 	"net/url"
 )
-
 var (
-	transport      *rafthttp.Transport
+	transport     *rafthttp.Transport
 	transportStopC = make(chan struct{})
 )
-
-func startTransport(raftNode *RaftNode) {
+func startTransport(raftNode *RaftNode){
 	transport = &rafthttp.Transport{
-		Logger:      zap.NewExample(),
-		ID:          types.ID(raftConfig.ID),
-		ClusterID:   0x1000,
-		Raft:        raftNode,
+		Logger: zap.NewExample(),
+		ID: types.ID(raftConfig.ID),
+		ClusterID: 0x1000,
+		Raft: raftNode,
 		ServerStats: stats.NewServerStats("", ""),
-		LeaderStats: stats.NewLeaderStats(fmt.Sprintf("%d", raftConfig.ID)),
+		LeaderStats: stats.NewLeaderStats(fmt.Sprintf("%d",raftConfig.ID)),
 		ErrorC:      make(chan error),
 	}
 	_ = transport.Start()
 
-	for _, r := range GetPeers() {
+	for _,r := range GetPeers() {
 		if r.ID != raftConfig.ID {
-			transport.AddPeer(types.ID(r.ID), []string{peersHosts[r.ID-1]})
+			transport.AddPeer(types.ID(r.ID),[]string{peersHosts[r.ID - 1]})
 		}
 	}
 	go serveTransport()
 }
 
 func serveTransport() {
-	hostParse, err := url.Parse(peersHosts[transport.ID-1])
+	hostParse,err := url.Parse(peersHosts[transport.ID - 1])
 	if err != nil {
-		log.Fatal(fmt.Sprintf("raft serve error:%s", err.Error()))
+		log.Fatal(fmt.Sprintf("raft serve error:%s",err.Error()))
 		return
 	}
 	log.Info(hostParse.Host)
-	ln, err := NewStoppableListener(hostParse.Host, transportStopC)
+	ln,err := NewStoppableListener(hostParse.Host, transportStopC)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Listener start fails:%s", err.Error()))
+		log.Fatal(fmt.Sprintf("Listener start fails:%s",err.Error()))
 	}
 	log.Info("Start to serve transport")
-	server := &http.Server{Handler: transport.Handler()}
+	server := &http.Server{Handler:transport.Handler()}
 	err = server.Serve(ln)
 	select {
 	case <-transportStopC:
 	default:
-		log.Fatal(fmt.Sprintf("Transport server stop : %v", err))
+		log.Fatal(fmt.Sprintf("Transport server stop : %v",err))
 
 	}
 }
 
-func stopTransport() {
+func stopTransport(){
 	close(transportStopC)
 }

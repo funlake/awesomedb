@@ -14,14 +14,12 @@ import (
 type RaftNode struct {
 	Node raft.Node
 }
-
 func (rc *RaftNode) Process(ctx context.Context, m raftpb.Message) error {
 	return rc.Node.Step(ctx, m)
 }
 func (rc *RaftNode) IsIDRemoved(id uint64) bool                           { return false }
 func (rc *RaftNode) ReportUnreachable(id uint64)                          {}
 func (rc *RaftNode) ReportSnapshot(id uint64, status raft.SnapshotStatus) {}
-
 var (
 	raftConfig    *raft.Config
 	raftPeers     []raft.Peer
@@ -34,15 +32,14 @@ var (
 	appliedIndex  uint64
 	snapshotIndex uint64
 )
-
-func StartRaftNode(id int, join bool, peers string) {
-	raftConfig = &raft.Config{
-		ID:                        uint64(id),
-		ElectionTick:              10,
-		HeartbeatTick:             1,
-		Storage:                   raftStorage,
-		MaxSizePerMsg:             1024 * 1024,
-		MaxInflightMsgs:           256,
+func StartRaftNode (id int,join bool,peers string) {
+	raftConfig =  &raft.Config{
+		ID: uint64(id),
+		ElectionTick: 10,
+		HeartbeatTick: 1,
+		Storage: raftStorage,
+		MaxSizePerMsg: 1024 * 1024,
+		MaxInflightMsgs: 256,
 		MaxUncommittedEntriesSize: 1 << 30,
 	}
 	wexist := walExist()
@@ -74,7 +71,7 @@ func StartRaftNode(id int, join bool, peers string) {
 	//设置raft node 传输监听
 	//transport看起来就是个简单的http transport
 	//为何这个地方不用grpc,raft节点之间的通讯难道都用的http传输?
-	startTransport(&RaftNode{Node: raftNode})
+	startTransport(&RaftNode{ Node:raftNode})
 	//监听状态机变更
 	//1.更新本地缓存值
 	//2.提交变更propose
@@ -84,15 +81,15 @@ func StartRaftNode(id int, join bool, peers string) {
 }
 
 func SetPeers(peers string) {
-	peersHosts = strings.Split(peers, ",")
+	peersHosts = strings.Split(peers,",")
 	for pi := range peersHosts {
-		raftPeers = append(raftPeers, raft.Peer{ID: uint64(pi + 1)})
+		raftPeers = append(raftPeers,raft.Peer{ID:uint64(pi+1)})
 	}
 }
 func GetPeers() []raft.Peer {
 	return raftPeers
 }
-func closeRaft() {
+func closeRaft(){
 	close(ProposeC)
 	close(confChangeC)
 	close(transportStopC)
@@ -101,7 +98,7 @@ func closeRaft() {
 	raftNode.Stop()
 }
 func handleRaft() {
-	snap, err := raftStorage.Snapshot()
+	snap,err := raftStorage.Snapshot()
 	if err != nil {
 		panic(err)
 	}
@@ -113,7 +110,7 @@ func handleRaft() {
 	handleStateMachine()
 	walog.Close()
 }
-func handlePropose() {
+func handlePropose(){
 	go func() {
 		for {
 			select {
@@ -133,7 +130,7 @@ func handleConfigChange() {
 		confChangeCount := uint64(0)
 		for {
 			select {
-			case cc, ok := <-confChangeC:
+			case cc, ok := <- confChangeC:
 				if !ok {
 					closeRaft()
 					return
@@ -151,9 +148,9 @@ func handleStateMachine() {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ticker.C:
+		case <- ticker.C:
 			raftNode.Tick()
-		case pd := <-raftNode.Ready():
+		case pd := <- raftNode.Ready():
 			_ = walog.Save(pd.HardState, pd.Entries)
 			if !raft.IsEmptySnap(pd.Snapshot) {
 				_ = saveSnapShot(pd.Snapshot)
@@ -162,7 +159,7 @@ func handleStateMachine() {
 			}
 			_ = raftStorage.Append(pd.Entries)
 			transport.Send(pd.Messages)
-			if ok := handleEntries(entriesToApply(pd.CommittedEntries)); !ok {
+			if ok := handleEntries(entriesToApply(pd.CommittedEntries));!ok {
 				closeRaft()
 				return
 			}
@@ -170,7 +167,7 @@ func handleStateMachine() {
 			//...
 			MemoryStorage.makeSnapshot()
 			raftNode.Advance()
-		case <-transport.ErrorC:
+		case <- transport.ErrorC:
 			closeRaft()
 			return
 		}
@@ -196,11 +193,11 @@ func handleEntries(entries []raftpb.Entry) bool {
 			switch cc.Type {
 			case raftpb.ConfChangeAddNode:
 				if len(cc.Context) > 0 {
-					transport.AddPeer(types.ID(cc.NodeID), []string{string(cc.Context)})
+					transport.AddPeer(types.ID(cc.NodeID),[]string{string(cc.Context)})
 				}
 			case raftpb.ConfChangeRemoveNode:
 				if cc.NodeID == raftConfig.ID {
-					log.Warn(fmt.Sprintf("Node %d has been removed from other member", raftConfig.ID))
+					log.Warn(fmt.Sprintf("Node %d has been removed from other member",raftConfig.ID))
 					return false
 				}
 				transport.RemovePeer(types.ID(cc.NodeID))
@@ -210,22 +207,22 @@ func handleEntries(entries []raftpb.Entry) bool {
 		//why the fuck need stuff like this?
 		if appliedIndex == walIndex {
 			select {
-			case CommitC <- nil:
+			case CommitC <- nil :
 
 			}
 		}
 	}
 	return true
 }
-func entriesToApply(commitedEntries []raftpb.Entry) (es []raftpb.Entry) {
+func entriesToApply (commitedEntries []raftpb.Entry) (es []raftpb.Entry) {
 	if len(commitedEntries) == 0 {
 		return commitedEntries
 	}
 	start := commitedEntries[0].Index
-	if start > appliedIndex+1 {
-		log.Fatal(fmt.Sprintf("First index should not bigger than appliedIndex,%d>%d", start, appliedIndex))
+	if start > appliedIndex + 1 {
+		log.Fatal(fmt.Sprintf("First index should not bigger than appliedIndex,%d>%d",start,appliedIndex))
 	}
-	if (appliedIndex - start + 1) < uint64(len(commitedEntries)) {
+	if (appliedIndex-start+1) < uint64(len(commitedEntries)) {
 		es = commitedEntries[appliedIndex-start+1:]
 	}
 	return es
