@@ -1,8 +1,9 @@
-package server
+package etcdraft
 
 import (
 	"github.com/funlake/awesomedb/pkg/domain/raftkv"
-	"github.com/funlake/awesomedb/pkg/domain/raftkv/server"
+	"github.com/funlake/awesomedb/pkg/domain/raftkv/rest"
+	"github.com/funlake/awesomedb/pkg/log"
 	"github.com/spf13/cobra"
 )
 
@@ -19,14 +20,22 @@ func init() {
 	cp.IntVarP(&id, "id", "i", 1, "Id of raft node")
 	cp.BoolVarP(&join, "join", "j", false, "If join to a cluster")
 	cp.StringVarP(&port, "port", "p", "12380", "Http serve port")
-
+	if cobra.MarkFlagRequired(cp, "peers") != nil ||
+		cobra.MarkFlagRequired(cp, "id") != nil ||
+		cobra.MarkFlagRequired(cp, "port") != nil {
+		//cobra.MarkFlagRequired(sp, "k") != nil ||
+		//cobra.MarkFlagRequired(sp, "ca") != nil {
+		log.Error("Fail to set required")
+	}
 }
 
 var Command = &cobra.Command{
-	Use:   "start.db",
-	Short: "start db node",
+	Use:   "raft.er",
+	Short: "start etcd raft",
 	Run: func(cmd *cobra.Command, args []string) {
+		// 1. etcd-raft,access from http
 		raftkv.StartRaftNode(id, join, peers)
-		server.SetUpHttpServer(":" + port)
+		rest.SetUpHttpServer(":" + port)
+		log.Info("fuck")
 	},
 }

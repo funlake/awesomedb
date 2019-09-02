@@ -1,4 +1,5 @@
 #!/bin/bash
-#rm -rf ./wal-1
-#rm -rf ./snap-1
-go build . && ./awesomedb start.db
+#1.etcd raft
+# ./awesomedb start.er
+#2.dragonboat raft
+./awesomedb start.dr [flags]

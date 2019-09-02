@@ -1,3 +1,9 @@
-./awesomedb start.db --id 1 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 12380
-./awesomedb start.db --id 2 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 22380
-./awesomedb start.db --id 3 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 32380
+## 在cmd/cobra.go里2选一编译
+./awesomedb raft.er --id 1 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 12380
+./awesomedb raft.er --id 2 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 22380
+./awesomedb raft.er --id 3 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0.0.1:32379 --port 32380
+
+# dragonboat-raft
+./awesomedb raft.dr --id 1 --peers 127.0.0.1:12379,127.0.0.1:22379,127.0.0.1:32379
+./awesomedb raft.dr --id 2 --peers 127.0.0.1:12379,127.0.0.1:22379,127.0.0.1:32379
+./awesomedb raft.dr --id 3 --peers 127.0.0.1:12379,127.0.0.1:22379,127.0.0.1:32379

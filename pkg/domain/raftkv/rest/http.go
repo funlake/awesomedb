@@ -1,4 +1,4 @@
-package server
+package rest
 
 import (
 	"fmt"
@@ -21,6 +21,6 @@ func SetUpHttpServer(port string) {
 		val, _ := raftkv.MemoryStorage.Find(ctx.UserValue("key").(string))
 		_, _ = ctx.Write([]byte(val))
 	})
-	log.Info(fmt.Sprintf("Raft http server listening on port %s", port))
+	log.Info(fmt.Sprintf("Raft http dragonboat listening on port %s", port))
 	log.Error(fasthttp.ListenAndServe(port, router.Handler).Error())
 }
